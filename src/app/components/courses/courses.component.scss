@@ -1,0 +1,62 @@
+.courses-section {
+  .search-box {
+    input:focus {
+      outline: none;
+      box-shadow: none;
+    }
+  }
+
+  .category-btn {
+    transition: all 0.3s ease;
+    background-color: transparent;
+    
+    &:hover, &.active {
+      background-color: var(--main-light);
+      color: var(--main-color) !important;
+      font-weight: 600;
+      
+      i {
+        transform: translateX(4px);
+        color: var(--main-color);
+      }
+    }
+    
+    &.active {
+      position: relative;
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 1rem;
+        right: 1rem;
+        height: 2px;
+        background-color: var(--main-color);
+        border-radius: 2px 2px 0 0;
+      }
+    }
+  }
+
+  .course-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    
+    .course-img-wrapper {
+      border-radius: 12px 12px 0 0;
+    }
+    
+    &:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .action-btn {
+      z-index: 2; /* Ensure clicks don't bubble up improperly if positioned */
+    }
+  }
+}
+
+.modal-content {
+  .modal-body {
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+}

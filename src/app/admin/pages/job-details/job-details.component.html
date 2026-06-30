@@ -1,0 +1,146 @@
+<div class="page-head mb-4 d-flex align-items-center gap-3">
+  <button class="btn btn-outline-secondary btn-sm" routerLink="/admin/jobs">
+    <i class="fa-solid fa-arrow-left"></i>
+  </button>
+  <div>
+    <h3 class="fw-bold mb-1">Job Opportunity Details</h3>
+    <p class="text-muted mb-0">Review job details and applicants</p>
+  </div>
+</div>
+
+<app-loading-spinner *ngIf="loading()" message="Loading details..."></app-loading-spinner>
+
+<div *ngIf="!loading() && job()" class="row g-4">
+  <div class="col-lg-4">
+    <div class="card-panel h-100">
+      <h5 class="fw-bold mb-3">Job Info</h5>
+      <p><strong>Title:</strong> {{ job()?.title }}</p>
+      <p><strong>Company:</strong> {{ job()?.companyName }}</p>
+      <p><strong>Email:</strong> {{ job()?.companyEmail }}</p>
+      <p><strong>Location:</strong> {{ job()?.location }}</p>
+      <p><strong>Type:</strong> {{ job()?.type }}</p>
+      <p><strong>Target Faculty:</strong> {{ job()?.targetFaculty }}</p>
+      <p><strong>Deadline:</strong> {{ job()?.deadline | date:'mediumDate' }}</p>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card-panel h-100">
+      <h5 class="fw-bold mb-4">Applicants <span class="badge bg-secondary ms-2">{{ applications().length }}</span></h5>
+
+      <app-loading-spinner *ngIf="applicationsLoading()" message="Loading applicants..."></app-loading-spinner>
+
+      <app-empty-state
+        *ngIf="!applicationsLoading() && applications().length === 0"
+        message="No applicants yet"
+        icon="fa-solid fa-user-clock">
+      </app-empty-state>
+
+      <div class="applicant-row d-flex align-items-center justify-content-between p-3 mb-3 border rounded bg-light" *ngFor="let app of applications()">
+        <div>
+          <h6 class="mb-0 fw-medium text-dark">{{ app.studentFullName }}</h6>
+          <p class="mb-0 text-muted small">{{ app.studentEmail }} · {{ app.studentFaculty }}</p>
+          <p class="mb-0 text-muted small">Applied {{ app.appliedAt | date:'medium' }}</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <!-- Cover Letter Icon -->
+          <button *ngIf="app.coverLetter" (click)="viewCoverLetter(app.coverLetter)" class="btn btn-sm btn-light text-warning shadow-sm border" title="View Cover Letter">
+            <i class="fa-solid fa-file-lines"></i>
+          </button>
+          <button *ngIf="!app.coverLetter" class="btn btn-sm btn-light text-muted shadow-sm border" disabled title="No Cover Letter">
+            <i class="fa-solid fa-file-excel opacity-50"></i>
+          </button>
+
+          <!-- Actions Dropdown -->
+          <div class="dropdown">
+            <button class="btn btn-sm btn-dark dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Actions
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-1">
+              <li>
+                <button class="dropdown-item py-2" (click)="viewApplicantProfile(app.studentId)">
+                  <i class="fa-solid fa-user text-info me-2" style="width: 16px; text-align: center;"></i> View Profile
+                </button>
+              </li>
+              <li>
+                <a class="dropdown-item py-2" [href]="'mailto:' + app.studentEmail">
+                  <i class="fa-solid fa-envelope text-secondary me-2" style="width: 16px; text-align: center;"></i> Send Email
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item py-2" [href]="getFullUrl(app.cvFilePath)" target="_blank" rel="noopener">
+                  <i class="fa-solid fa-file-pdf text-danger me-2" style="width: 16px; text-align: center;"></i> Download CV
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Profile Modal -->
+<div class="detail-modal-backdrop" *ngIf="showProfileModal()" (click)="closeProfileModal()"></div>
+<div class="detail-modal" *ngIf="showProfileModal()" style="max-width: 800px; width: 90%;">
+  <div class="detail-header d-flex align-items-center justify-content-between">
+    <h5 class="mb-0">Applicant Profile</h5>
+    <button class="btn-close" (click)="closeProfileModal()"></button>
+  </div>
+  <div class="detail-body" style="max-height: 70vh; overflow-y: auto;">
+    <app-loading-spinner *ngIf="profileLoading()" message="Loading profile..."></app-loading-spinner>
+    
+    <div *ngIf="!profileLoading() && selectedProfile()">
+      <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+          <h4 class="fw-bold mb-1">{{ selectedProfile().fullName }}</h4>
+          <p class="text-muted mb-0"><i class="fa-regular fa-envelope me-2"></i>{{ selectedProfile().email }}</p>
+          <p class="text-muted mb-0"><i class="fa-solid fa-phone me-2"></i>{{ selectedProfile().phone }}</p>
+        </div>
+        <a [href]="'mailto:' + selectedProfile().email" class="btn btn-primary">
+          <i class="fa-solid fa-paper-plane me-2"></i> Contact
+        </a>
+      </div>
+      
+      <div class="row g-4 mb-4">
+        <div class="col-md-6">
+          <h6 class="fw-bold border-bottom pb-2">Academic Info</h6>
+          <p class="mb-1"><strong>Faculty:</strong> {{ selectedProfile().faculty || 'N/A' }}</p>
+          <p class="mb-1"><strong>Graduation Year:</strong> {{ selectedProfile().graduationYear || 'N/A' }}</p>
+          <p class="mb-1"><strong>Education:</strong> {{ selectedProfile().education || 'N/A' }}</p>
+        </div>
+        <div class="col-md-6">
+          <h6 class="fw-bold border-bottom pb-2">Professional Info</h6>
+          <p class="mb-1"><strong>Career Goal:</strong> {{ selectedProfile().careerGoal || 'N/A' }}</p>
+          <p class="mb-1"><strong>Skills:</strong> {{ selectedProfile().skills || 'N/A' }}</p>
+          <p class="mb-1"><strong>Interests:</strong> {{ selectedProfile().interests || 'N/A' }}</p>
+        </div>
+      </div>
+
+      <h6 class="fw-bold border-bottom pb-2 mb-3">UCCD Courses</h6>
+      <div *ngIf="selectedProfile().courses?.length > 0; else noCourses">
+        <ul class="list-group mb-4">
+          <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let c of selectedProfile().courses">
+            {{ c.courseName }}
+            <span class="badge" [ngClass]="{'bg-success': c.status === 'Completed', 'bg-warning text-dark': c.status === 'Pending', 'bg-primary': c.status === 'Approved'}">{{ c.status }}</span>
+          </li>
+        </ul>
+      </div>
+      <ng-template #noCourses><p class="text-muted">No courses enrolled.</p></ng-template>
+
+      <h6 class="fw-bold border-bottom pb-2 mb-3">Volunteer Work</h6>
+      <div *ngIf="selectedProfile().volunteerWork?.length > 0; else noVol">
+        <ul class="list-group mb-4">
+          <li class="list-group-item d-flex justify-content-between align-items-center" *ngFor="let v of selectedProfile().volunteerWork">
+            {{ v.title }}
+            <span class="badge" [ngClass]="{'bg-success': v.status === 'Approved', 'bg-warning text-dark': v.status === 'Pending'}">{{ v.status }}</span>
+          </li>
+        </ul>
+      </div>
+      <ng-template #noVol><p class="text-muted">No volunteer work.</p></ng-template>
+
+    </div>
+  </div>
+</div>

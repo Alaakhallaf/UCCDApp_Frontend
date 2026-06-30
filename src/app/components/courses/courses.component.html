@@ -1,0 +1,278 @@
+<section class="courses-section min-vh-100 bg-light py-5">
+  <!-- Header -->
+  <div class="container mb-5">
+    <div class="row align-items-end">
+      <div class="col-lg-6">
+        <h1 class="display-5 fw-bold text-dark font-heading mb-3">{{ 'courses.title' | translate }}</h1>
+        <p class="text-muted lead mb-0">Discover programs designed to bridge the gap to your future career.</p>
+      </div>
+      <div class="col-lg-6">
+        <div class="d-flex flex-column flex-sm-row gap-3 mt-4 mt-lg-0 justify-content-lg-end">
+          <button *ngIf="auth.isLoggedIn()" class="btn btn-light text-main rounded-pill px-4 shadow-sm fw-bold d-flex align-items-center justify-content-center text-nowrap" (click)="openAiModal()">
+            <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Suggest Courses
+          </button>
+          <div class="search-box bg-white p-2 rounded-pill shadow-sm d-flex align-items-center border flex-grow-1" style="max-width: 400px;">
+            <i class="fa-solid fa-search text-muted ms-3 me-2"></i>
+            <input type="text" class="form-control border-0 shadow-none bg-transparent" [placeholder]="'courses.searchPlaceholder' | translate" [(ngModel)]="searchTerm" (input)="applyFilters()" (keyup.enter)="applyFilters()">
+            <button class="btn btn-main rounded-pill px-4" (click)="applyFilters()">Search</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="row g-4">
+      
+      <!-- Filters Sidebar -->
+      <div class="col-lg-3">
+        <div class="premium-card p-4 border-0 sticky-top" style="top: 100px;">
+          <h5 class="fw-bold mb-4 font-heading border-bottom pb-2">Categories</h5>
+          <ul class="list-unstyled mb-0">
+            <ng-container *ngFor="let cat of categories">
+              <li class="mb-2" *ngIf="cat !== 'Recommended' || auth.isLoggedIn()">
+                <button class="btn w-100 text-start px-3 py-2 border-0 rounded-3 text-muted fw-medium category-btn position-relative" 
+                        [class.text-main]="selectedCategory === cat"
+                        [class.fw-bold]="selectedCategory === cat"
+                        (click)="setCategory(cat)">
+                  <i class="fa-solid" [class.fa-angle-right]="selectedCategory !== cat" [class.fa-check]="selectedCategory === cat" class="me-2 small transition-normal"></i> 
+                  <span [class.border-bottom]="selectedCategory === cat" [class.border-main]="selectedCategory === cat" [class.border-2]="selectedCategory === cat" style="padding-bottom: 2px;">
+                    <i *ngIf="cat === 'Recommended'" class="fa-solid fa-wand-magic-sparkles text-main me-1"></i>
+                    {{ cat }}
+                  </span>
+                </button>
+              </li>
+            </ng-container>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Courses Grid -->
+      <div class="col-lg-9">
+        
+        <div *ngIf="selectedCategory === 'Recommended' && isAiLoading" class="text-center py-5 w-100 bg-white rounded-4 border shadow-sm mb-4">
+          <div class="spinner-border text-main mb-3" role="status"></div>
+          <h5 class="fw-bold text-dark">Finding the best courses for you...</h5>
+          <p class="text-muted">Analyzing your profile and matching you with top skills.</p>
+        </div>
+
+        <div *ngIf="selectedCategory === 'Recommended' && !isAiLoading" class="alert bg-white border border-main border-opacity-25 rounded-4 shadow-sm mb-4 d-flex flex-column flex-md-row align-items-center justify-content-between p-4">
+          <div class="d-flex align-items-center mb-3 mb-md-0">
+            <div class="bg-main-light text-main rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; min-width: 48px;">
+              <i class="fa-solid fa-user-pen fs-5"></i>
+            </div>
+            <div>
+              <h6 class="fw-bold text-dark mb-1">Want more accurate results?</h6>
+              <p class="text-muted mb-0 small">Complete your professional profile details (skills, goals, etc.) to get highly tailored course matches.</p>
+            </div>
+          </div>
+          <a routerLink="/student-profile" fragment="professional-details" class="btn btn-outline-main rounded-pill fw-bold px-4 text-nowrap">
+            Complete Profile <i class="fa-solid fa-arrow-right ms-1"></i>
+          </a>
+        </div>
+
+        <div class="row g-4" *ngIf="!(selectedCategory === 'Recommended' && isAiLoading)">
+          @for (course of filteredCourses; track course.id) {
+            <div class="col-md-6 col-xl-4">
+              <div class="premium-card h-100 border-0 group cursor-pointer course-card d-flex flex-column" (click)="openCourseDetails(course)">
+                
+                <!-- Card Image/Header -->
+                <div class="course-img-wrapper position-relative overflow-hidden" style="height: 180px; background: linear-gradient(135deg, #003366 0%, #00509d 100%);">
+                  <div class="position-absolute top-0 start-0 w-100 h-100 opacity-25" style="background-image: url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E');"></div>
+                  <div class="position-absolute top-0 end-0 p-3 z-1">
+                    <span class="badge bg-light text-main rounded-pill px-3 shadow-sm">{{ course.type }}</span>
+                  </div>
+                  <div class="position-absolute bottom-0 start-0 p-3 w-100 z-1 d-flex flex-column" style="background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);">
+                    <h5 class="text-white fw-bold mb-1 text-truncate font-heading">{{ course.name }}</h5>
+                    <span *ngIf="!auth.isAdmin() && enrolledCourseIds.has(course.id)" class="badge bg-success w-auto align-self-start"><i class="fa-solid fa-check me-1"></i> Enrolled</span>
+                  </div>
+                </div>
+
+                <!-- Card Body -->
+                <div class="card-body p-4 flex-grow-1 d-flex flex-column bg-white">
+                  <div class="d-flex justify-content-between text-muted small mb-3">
+                    <span><i class="fa-regular fa-calendar me-1"></i> {{ course.startDate | date:'MMM d, y' }}</span>
+                    <span><i class="fa-regular fa-clock me-1"></i> {{ course.duration }} Days</span>
+                  </div>
+                  
+                  <div class="mt-auto d-flex justify-content-between align-items-center pt-3 border-top">
+                    <span class="fs-5 fw-bold text-dark">{{ course.price > 0 ? course.price + ' EGP' : ('courses.free' | translate) }}</span>
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-light text-danger rounded-circle p-2 shadow-sm action-btn" 
+                              (click)="addToWishlist(course.id, $event, course.name, course.price)" 
+                              [title]="isWishlisted(course.id) ? 'Remove from Wishlist' : 'Add to Wishlist'"
+                              [disabled]="auth.isAdmin()">
+                        <i class="fa-heart" [class.fa-solid]="isWishlisted(course.id)" [class.fa-regular]="!isWishlisted(course.id)"></i>
+                      </button>
+                      <button class="btn btn-main rounded-pill px-3 action-btn" 
+                              [disabled]="enrolledCourseIds.has(course.id) || enrollingCourseId === course.id || auth.isAdmin()" 
+                              (click)="enrollCourse(course.id, $event)">
+                        @if (enrollingCourseId === course.id) {
+                          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        } @else if (enrolledCourseIds.has(course.id)) {
+                          Already Enrolled
+                        } @else {
+                          {{ 'courses.enroll' | translate }}
+                        }
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          } @empty {
+            <div class="col-12">
+              <div class="text-center py-5 bg-white rounded-4 border">
+                @if (selectedCategory === 'Recommended') {
+                  <i class="fa-solid fa-robot fs-1 text-main opacity-50 mb-3"></i>
+                  <h5 class="fw-bold text-dark mb-1">No matches found</h5>
+                  <p class="text-muted">We couldn't find courses matching your exact AI criteria right now.</p>
+                  <button class="btn btn-main rounded-pill px-4 mt-2" (click)="openAiModal()">Update AI Survey</button>
+                } @else {
+                  <i class="fa-solid fa-book-open fs-1 text-muted opacity-25 mb-3"></i>
+                  <h5 class="fw-bold text-dark mb-1">No courses found</h5>
+                  <p class="text-muted">Try adjusting your filters or search term.</p>
+                  <button class="btn btn-outline-main rounded-pill px-4 mt-2" (click)="searchTerm = ''; selectedCategory = 'All'; applyFilters()">Clear Filters</button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Course Details Modal Overlay -->
+<div class="modal-backdrop fade show" *ngIf="isModalOpen"></div>
+<div class="modal fade show d-block" tabindex="-1" *ngIf="isModalOpen" aria-modal="true" role="dialog" (click)="closeModal()">
+  <div class="modal-dialog modal-dialog-centered modal-lg" (click)="$event.stopPropagation()">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      
+      <!-- Modal Header (Visual) -->
+      <div class="position-relative bg-main text-white p-5" style="background: linear-gradient(135deg, #003366 0%, #00509d 100%);">
+        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-4" aria-label="Close" (click)="closeModal()"></button>
+        <div class="position-relative z-1">
+          <span class="badge bg-light text-main rounded-pill px-3 mb-3">{{ selectedCourse?.type }}</span>
+          <h2 class="fw-bold font-heading mb-2">{{ selectedCourse?.name }}</h2>
+          <div class="d-flex flex-wrap gap-4 mt-4 opacity-75">
+            <span><i class="fa-regular fa-calendar me-2"></i>Starts: {{ selectedCourse?.startDate | date:'mediumDate' }}</span>
+            <span><i class="fa-regular fa-clock me-2"></i>Duration: {{ selectedCourse?.duration }} Days</span>
+            <span *ngIf="selectedCourse?.price! > 0"><i class="fa-solid fa-tag me-2"></i>Price: {{ selectedCourse?.price }} EGP</span>
+            <span *ngIf="selectedCourse?.price === 0"><i class="fa-solid fa-tag me-2"></i>Price: Free</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body p-5">
+        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">Course Description</h5>
+        <p class="text-muted lh-lg mb-5">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+          <br><br>
+          Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.
+        </p>
+        
+        <div class="row g-4 mb-2">
+
+          <div class="col-sm-6">
+            <div class="d-flex align-items-center gap-3">
+              <div class="bg-light p-3 rounded-circle text-main"><i class="fa-solid fa-location-dot fs-5"></i></div>
+              <div>
+                <small class="text-muted d-block">Location</small>
+                <span class="fw-bold text-dark">UCCD Center</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="auth.isAdmin()" class="alert alert-warning py-2 small mt-4 mb-0">
+          <i class="fa-solid fa-triangle-exclamation me-1"></i> As an Admin, you cannot enroll in courses.
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer p-4 bg-light border-0 justify-content-between">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" (click)="closeModal()">{{ 'common.close' | translate }}</button>
+        <div class="d-flex gap-2">
+          <button class="btn btn-light text-danger rounded-circle p-2 shadow-sm" (click)="addToWishlist(selectedCourse?.id, $event, selectedCourse?.name, selectedCourse?.price)" [title]="isWishlisted(selectedCourse?.id) ? 'Remove from Wishlist' : 'Save for later'">
+            <i class="fa-heart" [class.fa-solid]="isWishlisted(selectedCourse?.id)" [class.fa-regular]="!isWishlisted(selectedCourse?.id)"></i>
+          </button>
+          <button type="button" class="btn btn-main rounded-pill px-5 shadow-sm fw-bold" 
+                  [disabled]="(!!selectedCourse && enrollingCourseId === selectedCourse.id) || (!!selectedCourse && enrolledCourseIds.has(selectedCourse.id)) || auth.isAdmin()" 
+                  (click)="enrollCourse(selectedCourse?.id)">
+            @if (selectedCourse && enrollingCourseId === selectedCourse.id) {
+              <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Enrolling...
+            } @else if (selectedCourse && enrolledCourseIds.has(selectedCourse.id)) {
+              Already Enrolled
+            } @else {
+              {{ 'courses.enrollNow' | translate }}
+            }
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- AI Recommendations Modal Overlay -->
+<div class="modal-backdrop fade show" *ngIf="isAiModalOpen"></div>
+<div class="modal fade show d-block" tabindex="-1" *ngIf="isAiModalOpen" aria-modal="true" role="dialog" (click)="closeAiModal()">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" (click)="$event.stopPropagation()">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      
+      <div class="modal-header bg-light border-bottom-0 p-4 pb-0">
+        <div class="d-flex align-items-center gap-3">
+          <div class="bg-main-light text-main rounded-circle d-flex align-items-center justify-content-center fs-3" style="width: 50px; height: 50px;">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <div>
+            <h4 class="fw-bold font-heading mb-1 text-dark">AI Course Matcher</h4>
+            <h6 class="text-muted mb-0">Let AI find the perfect courses for your goals.</h6>
+          </div>
+        </div>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeAiModal()"></button>
+      </div>
+
+      <div class="modal-body p-4">
+        
+        <div>
+          <div class="alert alert-info border-0 rounded-3 mb-4">
+            <i class="fa-solid fa-circle-info me-2"></i> Answer these 3 quick questions so our AI can personalize your recommendations.
+          </div>
+          
+          <div class="mb-4">
+            <label class="form-label fw-bold text-dark">1. What field or topic are you most interested in?</label>
+            <input type="text" class="form-control form-control-lg bg-light border-0" placeholder="e.g. Frontend Web Development, Machine Learning..." [(ngModel)]="aiField" (keyup.enter)="submitAiForm()">
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-bold text-dark">2. What is your primary career goal?</label>
+            <input type="text" class="form-control form-control-lg bg-light border-0" placeholder="e.g. Build a strong portfolio, get an internship..." [(ngModel)]="aiGoal" (keyup.enter)="submitAiForm()">
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-bold text-dark">3. What is your current level in this field?</label>
+            <select class="form-select form-select-lg bg-light border-0" [(ngModel)]="aiLevel">
+              <option value="Beginner">Beginner (Starting from scratch)</option>
+              <option value="Intermediate">Intermediate (Have some basics)</option>
+              <option value="Advanced">Advanced (Looking for deep dives)</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer p-4 bg-light border-0 justify-content-between">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" (click)="closeAiModal()">Cancel</button>
+        
+        <button type="button" class="btn btn-main rounded-pill px-5 shadow-sm fw-bold" (click)="submitAiForm()" [disabled]="isGeneratingAi || !aiField || !aiGoal">
+          <span *ngIf="isGeneratingAi" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          {{ isGeneratingAi ? 'Analyzing...' : 'Get Recommendations' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
